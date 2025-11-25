@@ -186,7 +186,7 @@ const CONFIG= {
         header: 'Featured Projects',
         projects: [
           {title: 'Avocado',
-            description: 'Avocado — AI-powered cost of living predictor for any city. Avocado uses machine learning to compare cities and instantly estimate the cost of living, helping users understand expenses like housing, food, transport, and lifestyle before moving.',
+            description: 'Built in just 15 hours during Sheridan Datathon 2025 and powered by insights from DevFest 2025, Avocado is an AI-driven cost-of-living predictor that helps users instantly understand how expensive it is to live in any city. It analyzes news trends, weather patterns, and regional metrics, feeding them into a weighted ML model (Random Forest) to generate an AvoScore — a clear, explainable snapshot of a city’s affordability. Deployed end-to-end on GCP with Cloud Run, Gemini, and Google Maps API, Avocado won the Best Use of GCP award and ranked among the top 4 projects.',
             imageUrl: '/images/avocado-mascot.png',
             link: 'https://avocado.prabalmanchanda.com',
           },
