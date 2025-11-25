@@ -165,6 +165,7 @@ const CONFIG= {
         mode: 'manual',
         manual: {
             projects: [
+              'PrabalManchanda/Avocado',
               'PrabalManchanda/My-Portfolio',
               'PrabalManchanda/Portfolio-Builder',
               'rishabhworks/The-Semicolon-Squad',
@@ -184,6 +185,11 @@ const CONFIG= {
       external: {
         header: 'Featured Projects',
         projects: [
+          {title: 'Avocado',
+            description: 'Avocado — AI-powered cost of living predictor for any city. Avocado uses machine learning to compare cities and instantly estimate the cost of living, helping users understand expenses like housing, food, transport, and lifestyle before moving.',
+            imageUrl: '/images/avocado-mascot.png',
+            link: 'https://avocado.prabalmanchanda.com',
+          },
           {
             title: 'PhrasePerfect',
             description:
