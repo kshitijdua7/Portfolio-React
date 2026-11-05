@@ -105,6 +105,13 @@ const CONFIG = {
           link: 'https://theshadingzone.vercel.app',
         },
         {
+          title: 'IQ Homes',
+          description:
+            'Smart home design and installation company serving the Greater Toronto Area, covering smart locks, cameras, lighting, climate and whole-home audio. Built with plain HTML, CSS and JavaScript.',
+          imageUrl: '/images/projects/iq-homes.png',
+          link: 'https://iqhomes.vercel.app',
+        },
+        {
           title: 'Sprout Buddy (Concept)',
           description:
             'A cute concept demo where your houseplants tell you when they are thirsty and perk up when you water them. Built with plain HTML, CSS and JavaScript.',
