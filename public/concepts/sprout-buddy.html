@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sprout Buddy</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:ui-rounded,"SF Pro Rounded","Trebuchet MS",system-ui,sans-serif;background:#f1f8e4;color:#31472a;padding:24px 16px}
+  main{max-width:640px;margin:auto}
+  .tag{display:inline-block;background:#fff;border-radius:99px;padding:4px 12px;font-size:13px}
+  h1{font-size:36px;margin:12px 0 4px}
+  p{margin:0 0 20px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .plant{background:#fff;border-radius:24px;padding:16px;text-align:center;box-shadow:0 6px 0 #d9e8bf}
+  .face{font-size:52px;line-height:1.2}
+  h2{font-size:18px;margin:4px 0}
+  .bar{height:12px;border-radius:99px;background:#e6efd6;overflow:hidden;margin:10px 0}
+  .fill{height:100%;background:#6cc1e8;transition:width .3s}
+  button{font:inherit;font-weight:700;border:0;border-radius:99px;padding:10px 16px;min-height:44px;background:#7bbf4e;color:#16300b;cursor:pointer}
+  button:hover{background:#8fcf63}
+  button:focus-visible{outline:3px solid #31472a;outline-offset:2px}
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">Concept demo by Kshitij Dua</span>
+  <h1>Sprout Buddy 🌱</h1>
+  <p>Your plants tell you when they're thirsty. Give them a drink and watch them cheer up.</p>
+  <div class="grid" id="plants"></div>
+</main>
+<script>
+  const plants = [
+    { name: 'Basil', water: 30 },
+    { name: 'Fernando the Fern', water: 65 },
+    { name: 'Spike the Cactus', water: 90 },
+  ];
+  const mood = (w) => (w < 40 ? ['🥀', 'So thirsty…'] : w < 75 ? ['🌿', 'Doing okay'] : ['🌻', 'Happy and hydrated!']);
+  const root = document.getElementById('plants');
+  function render() {
+    root.innerHTML = '';
+    plants.forEach((p) => {
+      const [face, text] = mood(p.water);
+      const card = document.createElement('div');
+      card.className = 'plant';
+      card.innerHTML = `<div class="face">${face}</div><h2>${p.name}</h2><div>${text}</div><div class="bar"><div class="fill" style="width:${p.water}%"></div></div>`;
+      const btn = document.createElement('button');
+      btn.textContent = 'Water me 💧';
+      btn.onclick = () => { p.water = Math.min(100, p.water + 20); render(); };
+      card.append(btn);
+      root.append(card);
+    });
+  }
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Purr Planner</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:ui-rounded,"SF Pro Rounded","Trebuchet MS",system-ui,sans-serif;background:#fdeef2;color:#54303c;padding:24px 16px}
+  main{max-width:520px;margin:auto}
+  .tag{display:inline-block;background:#fff;border-radius:99px;padding:4px 12px;font-size:13px}
+  h1{font-size:36px;margin:12px 0 4px}
+  p{margin:0 0 16px}
+  .cat{background:#fff;border-radius:24px;padding:16px;text-align:center;box-shadow:0 6px 0 #f6d3dd;margin-bottom:18px}
+  .face{font-size:64px;line-height:1.2}
+  .hearts{font-size:20px;min-height:28px}
+  ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+  label{display:flex;align-items:center;gap:12px;min-height:52px;background:#fff;border-radius:18px;padding:10px 16px;cursor:pointer}
+  input{width:22px;height:22px;accent-color:#e0688d}
+  input:checked + span{text-decoration:line-through;opacity:.65}
+</style>
+</head>
+<body>
+<main>
+  <span class="tag">Concept demo by Kshitij Dua</span>
+  <h1>Purr Planner 🐾</h1>
+  <p>A daily care list for your cat. Finish the chores and Mochi gets happier.</p>
+  <div class="cat">
+    <div class="face" id="face" aria-hidden="true">😿</div>
+    <strong id="status" role="status"></strong>
+    <div class="hearts" id="hearts" aria-hidden="true"></div>
+  </div>
+  <ul id="tasks"></ul>
+</main>
+<script>
+  const tasks = ['Breakfast 🐟', 'Fresh water 💧', 'Playtime with the feather 🪶', 'Scoop the litter box 🧹', 'Evening cuddles 🛋️'];
+  const list = document.getElementById('tasks');
+  tasks.forEach((t) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<label><input type="checkbox"><span>${t}</span></label>`;
+    list.append(li);
+  });
+  function update() {
+    const done = list.querySelectorAll('input:checked').length;
+    const faces = ['😿', '😾', '🐱', '😺', '😸', '😻'];
+    document.getElementById('face').textContent = faces[done];
+    document.getElementById('hearts').textContent = '💗'.repeat(done);
+    document.getElementById('status').textContent =
+      done === tasks.length ? 'Mochi is purring. All done!' : `Mochi's day: ${done} of ${tasks.length} done`;
+  }
+  list.addEventListener('change', update);
+  update();
+</script>
+</body>
+</html>
