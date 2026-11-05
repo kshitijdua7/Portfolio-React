@@ -81,28 +81,28 @@ const CONFIG = {
           description:
             'Website for a property turnover and renovation company serving the GTA, covering painting, drywall repair, deep cleaning, plumbing, electrical and more. Built with Next.js, React, TypeScript and Tailwind CSS.',
           imageUrl: '/images/projects/all-times-solutions.png',
-          link: 'https://all-times-solutions.vercel.app',
+          link: 'https://www.alltimesolutions.ca',
         },
         {
           title: 'Black & Decor',
           description:
             'Responsive e-commerce site for home appliances, decor and lifestyle electronics, designed for clean, product-focused browsing. Built with the Next.js App Router and deployed on Vercel.',
           imageUrl: '/images/projects/black-decor.png',
-          link: 'https://black-decor.vercel.app',
+          link: 'https://blackdecor.vercel.app',
         },
         {
           title: 'PhrasePerfect',
           description:
             'AI-powered paraphraser and writing assistant that improves grammar, rewrites sentences and offers real-time suggestions. Built with React and JavaScript.',
           imageUrl: '/images/projects/phraseperfect.png',
-          link: 'https://github.com/kshitijdua7/PhrasePerfect',
+          link: 'https://kshitijduaphraseperfect.vercel.app',
         },
         {
           title: 'The Shading Zone',
           description:
             'Website for a custom window covering company that designs, manufactures and installs blinds, shades, curtains and drapery for homes and commercial spaces. Built with Next.js, TypeScript and Tailwind CSS.',
           imageUrl: '/images/projects/shading-zone.svg',
-          link: 'https://github.com/kshitijdua7/The-Shading-Zone',
+          link: 'https://theshadingzone.vercel.app',
         },
         {
           title: 'Sprout Buddy (Concept)',
