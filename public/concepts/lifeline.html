@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lifeline</title>
+<style>
+  :root{--bg:#07060b;--ink:#fff5f3;--dim:#a79a9f;--good:#4dffb0;--warn:#ffc53d;--hot:#ff2d55}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:manipulation}
+  canvas{position:fixed;inset:0;width:100%;height:100%}
+  .ui{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));pointer-events:none}
+  .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .brand{font-weight:800;letter-spacing:.2em;font-size:13px}
+  .small{font-size:12px;color:var(--dim);max-width:30ch;text-align:right;line-height:1.4}
+  .mid{text-align:center}
+  #rate{font-size:clamp(72px,20vw,150px);font-weight:900;line-height:.95;font-variant-numeric:tabular-nums;transition:color .15s}
+  #unit{font-size:12px;letter-spacing:.25em;color:var(--dim)}
+  #cue{font-size:clamp(20px,5vw,34px);font-weight:800;margin-top:10px;min-height:1.3em}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:440px;width:100%;margin:0 auto 12px;text-align:center}
+  .stats b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+  .stats span{font-size:11px;color:var(--dim);letter-spacing:.08em}
+  .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;pointer-events:auto}
+  button{font:inherit;font-weight:700;color:var(--ink);background:#ffffff14;border:1px solid #ffffff2e;border-radius:12px;padding:12px 16px;min-height:44px;cursor:pointer}
+  button:hover{background:#ffffff26}
+  button:focus-visible{outline:3px solid var(--good);outline-offset:2px}
+  button[aria-pressed=true]{background:var(--ink);color:#111}
+  #intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:#07060bd9;z-index:2}
+  #intro h1{font-size:clamp(44px,11vw,96px);margin:0;letter-spacing:-.04em;line-height:1}
+  #intro p{max-width:50ch;color:#d9cdd0;line-height:1.55;margin:16px 0}
+  #intro strong{color:var(--ink)}
+  #intro .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  #begin{background:var(--hot);border-color:var(--hot);color:#fff;font-size:18px;padding:16px 26px}
+  #intro small{color:var(--dim);margin-top:18px;max-width:56ch;line-height:1.5}
+</style>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<div class="ui">
+  <div class="top">
+    <div class="brand">LIFELINE</div>
+    <div class="small">Tap anywhere or press Space with every compression</div>
+  </div>
+  <div class="mid" aria-live="polite">
+    <div id="rate">--</div>
+    <div id="unit">COMPRESSIONS / MIN</div>
+    <div id="cue">Start pushing</div>
+  </div>
+  <div>
+    <div class="stats">
+      <div><b id="count">0</b><span>COMPRESSIONS</span></div>
+      <div><b id="zone">0%</b><span>IN RHYTHM</span></div>
+      <div><b id="time">0:00</b><span>ELAPSED</span></div>
+    </div>
+    <div class="actions">
+      <button id="beat" aria-pressed="true">Metronome</button>
+      <button id="demo" aria-pressed="false">Auto demo</button>
+      <button id="reset">Reset</button>
+    </div>
+  </div>
+</div>
+<div id="intro">
+  <h1>Lifeline</h1>
+  <p>When someone's heart stops, the people nearby often freeze or push at the wrong speed. <strong>Lifeline turns any phone into a calm rhythm coach</strong>, so you always know whether to go faster, slower, or hold steady.</p>
+  <div class="row">
+    <button id="begin">Start practising</button>
+    <button id="startDemo">Watch the demo</button>
+  </div>
+  <small>Concept for practice only, not a medical device. In a real emergency, call your local emergency number first and follow the dispatcher's instructions. Target of 100–120 compressions per minute follows published resuscitation guidelines.</small>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const $ = (id) => document.getElementById(id);
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W = 0, H = 0, S = 1;
+
+  const POINTS = calm ? 500 : 1400;
+  const dots = Array.from({ length: POINTS }, () => {
+    const t = Math.random() * Math.PI * 2;
+    const r = Math.sqrt(Math.random());
+    return {
+      hx: 16 * Math.sin(t) ** 3 * r,
+      hy: -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * r,
+      x: 0, y: 0, vx: 0, vy: 0, seed: Math.random() * 6.28,
+    };
+  });
+  const rings = [];
+  const trace = new Array(240).fill(0);
+
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    S = Math.min(W, H) / 46;
+    dots.forEach((d) => { d.x = W / 2 + d.hx * S; d.y = H / 2 + d.hy * S; });
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  let audio = null, metronome = true, demo = false, nextTick = 0, nextDemo = 0;
+  const TARGET = 110;
+  let taps = [], count = 0, inZone = 0, startedAt = 0, kick = 0, rate = 0, status = 'idle';
+
+  function click(freq, gain) {
+    if (!audio) return;
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(gain, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.07);
+    o.connect(g).connect(audio.destination);
+    o.start(); o.stop(audio.currentTime + 0.08);
+  }
+  function unlockAudio() {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    audio.resume();
+  }
+
+  const COLORS = { idle: [255, 45, 85], slow: [255, 197, 61], good: [77, 255, 176], fast: [255, 45, 85] };
+  const CUES = { idle: 'Start pushing', slow: 'Faster', good: 'Perfect. Hold this', fast: 'Slow down' };
+
+  function compress(now) {
+    if (!startedAt) startedAt = now;
+    taps.push(now);
+    if (taps.length > 7) taps.shift();
+    count++;
+    kick = 1;
+    rings.push({ r: 0, life: 1 });
+    trace.push(1);
+    if (taps.length >= 3) {
+      rate = Math.round(60000 * (taps.length - 1) / (taps[taps.length - 1] - taps[0]));
+      status = rate < 100 ? 'slow' : rate > 120 ? 'fast' : 'good';
+      if (status === 'good') inZone++;
+    }
+    render();
+    if (navigator.vibrate) navigator.vibrate(12);
+  }
+
+  function render() {
+    const c = COLORS[status];
+    $('rate').textContent = rate || '--';
+    $('rate').style.color = `rgb(${c})`;
+    $('cue').textContent = CUES[status];
+    $('count').textContent = count;
+    $('zone').textContent = (count > 2 ? Math.round(inZone / (count - 2) * 100) : 0) + '%';
+  }
+
+  function reset() {
+    taps = []; count = 0; inZone = 0; startedAt = 0; rate = 0; status = 'idle';
+    $('time').textContent = '0:00';
+    render();
+  }
+
+  function setDemo(on) {
+    demo = on;
+    $('demo').setAttribute('aria-pressed', on);
+    if (on) { reset(); nextDemo = 0; }
+  }
+
+  function demoInterval(now) {
+    const t = (now - startedAt) / 1000 % 18;
+    const bpm = t < 5 ? 84 : t < 11 ? 110 : t < 14 ? 136 : 110;
+    return 60000 / bpm;
+  }
+
+  function closeIntro(withDemo) {
+    unlockAudio();
+    $('intro').style.display = 'none';
+    setDemo(withDemo);
+  }
+  $('begin').onclick = () => closeIntro(false);
+  $('startDemo').onclick = () => closeIntro(true);
+  $('beat').onclick = () => {
+    metronome = !metronome;
+    $('beat').setAttribute('aria-pressed', metronome);
+  };
+  $('demo').onclick = () => setDemo(!demo);
+  $('reset').onclick = () => { setDemo(false); reset(); };
+
+  addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button') || $('intro').style.display !== 'none') return;
+    if (demo) setDemo(false);
+    compress(performance.now());
+  });
+  addEventListener('keydown', (e) => {
+    if (e.code !== 'Space' || e.repeat || $('intro').style.display !== 'none') return;
+    if (document.activeElement && document.activeElement.tagName === 'BUTTON') document.activeElement.blur();
+    e.preventDefault();
+    if (demo) setDemo(false);
+    compress(performance.now());
+  });
+
+  function frame(now) {
+    const introOpen = $('intro').style.display !== 'none';
+    if (!introOpen && metronome && now >= nextTick) {
+      click(880, 0.12);
+      nextTick = now + 60000 / TARGET;
+    }
+    if (demo && now >= nextDemo) {
+      compress(now);
+      nextDemo = now + demoInterval(now);
+    }
+    if (taps.length && now - taps[taps.length - 1] > 2500 && status !== 'idle') {
+      status = 'idle'; rate = 0; taps = []; render();
+    }
+    if (startedAt) {
+      const s = Math.floor((now - startedAt) / 1000);
+      $('time').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+      if (s >= 120 && s % 120 < 6) $('cue').textContent = 'Swap rescuers if you can';
+    }
+
+    const [r, g, b] = COLORS[status];
+    ctx.fillStyle = 'rgba(7,6,11,.28)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+
+    kick *= 0.88;
+    const scale = S * (1 + (calm ? 0 : kick * 0.16));
+    const cx = W / 2, cy = H / 2;
+
+    const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * (20 + kick * 12));
+    glow.addColorStop(0, `rgba(${r},${g},${b},${0.14 + kick * 0.25})`);
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = `rgba(${r},${g},${b},.8)`;
+    for (const d of dots) {
+      const tx = cx + d.hx * scale + Math.sin(now / 700 + d.seed) * 2;
+      const ty = cy + d.hy * scale + Math.cos(now / 800 + d.seed) * 2;
+      const dx = d.x - cx, dy = d.y - cy, len = Math.hypot(dx, dy) || 1;
+      const burst = calm ? 0 : kick * kick * 2.2;
+      d.vx = (d.vx + (tx - d.x) * 0.06 + dx / len * burst) * 0.82;
+      d.vy = (d.vy + (ty - d.y) * 0.06 + dy / len * burst) * 0.82;
+      d.x += d.vx; d.y += d.vy;
+      ctx.fillRect(d.x, d.y, 1.8, 1.8);
+    }
+
+    if (!calm) {
+      for (let i = rings.length - 1; i >= 0; i--) {
+        const k = rings[i];
+        k.r += Math.max(W, H) * 0.012;
+        k.life *= 0.95;
+        if (k.life < 0.03) { rings.splice(i, 1); continue; }
+        ctx.strokeStyle = `rgba(${r},${g},${b},${k.life * 0.45})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, k.r, 0, 6.283);
+        ctx.stroke();
+      }
+    }
+
+    trace.push(trace[trace.length - 1] * 0.82);
+    if (trace.length > 240) trace.splice(0, trace.length - 240);
+    const base = H * 0.66;
+    ctx.strokeStyle = `rgba(${r},${g},${b},.55)`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    trace.forEach((v, i) => {
+      const x = i / 239 * W;
+      const y = base - v * Math.sin(i * 0.9) * 46;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

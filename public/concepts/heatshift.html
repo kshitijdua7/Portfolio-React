@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HeatShift</title>
+<style>
+  :root{--bg:#06080d;--panel:#101520e8;--ink:#f3f7ff;--dim:#93a0b5;--line:#ffffff1f;--cool:#43e6ff;--hot:#ff5a36}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{max-width:1180px;margin:auto;padding:20px 16px 32px}
+  h1{font-size:clamp(38px,8vw,76px);line-height:1;letter-spacing:-.04em;margin:0}
+  h1 span{background:linear-gradient(90deg,var(--hot),#ffc53d,var(--cool));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lede{color:#c4cede;max-width:62ch;line-height:1.5;margin:10px 0 18px}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:14px}
+  @media(max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+  .stage{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000;aspect-ratio:8/5}
+  canvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+  #hint{position:absolute;left:12px;bottom:12px;background:#000a;padding:6px 10px;border-radius:8px;font-size:13px;pointer-events:none}
+  aside{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px}
+  .big{font-size:58px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;color:var(--cool)}
+  .label{font-size:11px;letter-spacing:.14em;color:var(--dim)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+  .tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  button{font:inherit;font-weight:700;color:var(--ink);background:#ffffff12;border:1px solid var(--line);border-radius:10px;padding:10px;min-height:44px;cursor:pointer}
+  button:hover{background:#ffffff24}
+  button:focus-visible{outline:3px solid var(--cool);outline-offset:2px}
+  button[aria-pressed=true]{background:var(--ink);color:#0a0d14}
+  #auto{grid-column:1/-1;background:linear-gradient(90deg,#0fb6d6,#2fe39b);border:0;color:#04201f}
+  .meter{height:8px;border-radius:9px;background:#ffffff1a;overflow:hidden;margin-top:6px}
+  #budgetFill{height:100%;background:var(--cool);width:100%;transition:width .15s}
+  .scale{height:10px;border-radius:9px;background:linear-gradient(90deg,#1747c9,#16c5d8,#3ddc84,#ffd23d,#ff5a36,#c8102e)}
+  .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px}
+  small{color:var(--dim);line-height:1.45;display:block}
+</style>
+</head>
+<body>
+<main>
+  <h1>Heat<span>Shift</span></h1>
+  <p class="lede">Extreme heat kills quietly, and it hits the hottest neighbourhoods hardest. HeatShift lets a city see where cooling helps most: plant street trees or add cool roofs, and watch the heat move in real time.</p>
+  <div class="layout">
+    <div class="stage">
+      <canvas id="c" width="960" height="600" aria-label="Thermal map of a simulated city. Drag to place the selected cooling tool."></canvas>
+      <div id="hint">Drag across the city to cool it</div>
+    </div>
+    <aside>
+      <div>
+        <div class="label">PEAK AVERAGE COOLED</div>
+        <div class="big" id="delta" aria-live="polite">0.0°C</div>
+      </div>
+      <div class="row">
+        <div><b id="avg">--</b><span class="label">CITY AVG</span></div>
+        <div><b id="risk">--</b><span class="label">RESIDENTS IN DANGER HEAT</span></div>
+      </div>
+      <div>
+        <div class="label">BUDGET: <span id="budget">0</span> UNITS LEFT</div>
+        <div class="meter"><div id="budgetFill"></div></div>
+      </div>
+      <div class="tools">
+        <button id="tree" aria-pressed="true">Street trees</button>
+        <button id="roof" aria-pressed="false">Cool roofs</button>
+        <button id="auto">Find the best plan</button>
+        <button id="reset" style="grid-column:1/-1">Reset city</button>
+      </div>
+      <div>
+        <div class="scale"></div>
+        <div class="ticks"><span>26°</span><span>35°</span><span>44°</span></div>
+      </div>
+      <small>Concept model on a made-up city. Temperatures and resident counts are illustrative, not a forecast. A real version would use satellite land-surface data.</small>
+    </aside>
+  </div>
+</main>
+<script>
+(() => {
+  const COLS = 64, ROWS = 40, BUDGET = 220, DANGER = 38;
+  const ROAD = 0, BUILDING = 1, ROOF = 2, TREE = 3, PARK = 4, WATER = 5;
+  const TARGET = { [ROAD]: 45, [BUILDING]: 42, [ROOF]: 32, [TREE]: 27, [PARK]: 30, [WATER]: 25 };
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('c'), ctx = canvas.getContext('2d');
+  const buffer = document.createElement('canvas');
+  buffer.width = COLS; buffer.height = ROWS;
+  const bctx = buffer.getContext('2d');
+  const image = bctx.createImageData(COLS, ROWS);
+  const CW = canvas.width / COLS, CH = canvas.height / ROWS;
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const idx = (x, y) => y * COLS + x;
+
+  let seed = 7;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+  const type = new Uint8Array(COLS * ROWS);
+  const people = new Uint16Array(COLS * ROWS);
+  let temp = new Float32Array(COLS * ROWS);
+  let next = new Float32Array(COLS * ROWS);
+  let budget = BUDGET, tool = TREE, baseline = 0, autoRunning = false;
+  const sparks = [];
+
+  function buildCity() {
+    seed = 7;
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const street = x % 9 === 0 || y % 7 === 0;
+      const i = idx(x, y);
+      type[i] = street ? ROAD : BUILDING;
+      people[i] = street ? 0 : 20 + Math.floor(rand() * 90);
+    }
+    const carve = (x0, y0, w, h, kind) => {
+      for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+        const i = idx(x, y);
+        type[i] = kind; people[i] = 0;
+      }
+    };
+    carve(46, 22, 10, 8, PARK);
+    carve(0, 34, 22, 6, WATER);
+    carve(10, 8, 5, 5, PARK);
+    temp.fill(36);
+    for (let n = 0; n < 700; n++) step();
+    baseline = average();
+    budget = BUDGET;
+    autoRunning = false;
+    sparks.length = 0;
+    stats();
+  }
+
+  function step() {
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const i = idx(x, y), t = temp[i];
+      const l = temp[x ? i - 1 : i], r = temp[x < COLS - 1 ? i + 1 : i];
+      const u = temp[y ? i - COLS : i], d = temp[y < ROWS - 1 ? i + COLS : i];
+      next[i] = t + 0.2 * (l + r + u + d - 4 * t) + 0.05 * (TARGET[type[i]] - t);
+    }
+    [temp, next] = [next, temp];
+  }
+
+  function average() {
+    let sum = 0;
+    for (const t of temp) sum += t;
+    return sum / temp.length;
+  }
+
+  function stats() {
+    let danger = 0;
+    temp.forEach((t, i) => { if (t >= DANGER) danger += people[i]; });
+    const avg = average();
+    $('avg').textContent = avg.toFixed(1) + '°';
+    $('risk').textContent = danger.toLocaleString();
+    $('delta').textContent = Math.max(0, baseline - avg).toFixed(1) + '°C';
+    $('budget').textContent = budget;
+    $('budgetFill').style.width = budget / BUDGET * 100 + '%';
+  }
+
+  function place(x, y, kind) {
+    if (budget <= 0 || x < 0 || y < 0 || x >= COLS || y >= ROWS) return false;
+    const i = idx(x, y);
+    const ok = (kind === TREE && type[i] === ROAD) || (kind === ROOF && type[i] === BUILDING);
+    if (!ok) return false;
+    type[i] = kind;
+    budget--;
+    if (!calm) for (let n = 0; n < 5; n++) {
+      sparks.push({
+        x: (x + 0.5) * CW, y: (y + 0.5) * CH,
+        vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, life: 1,
+      });
+    }
+    return true;
+  }
+
+  const STOPS = [[23, 71, 201], [22, 197, 216], [61, 220, 132], [255, 210, 61], [255, 90, 54], [200, 16, 46]];
+  function color(t) {
+    const p = Math.max(0, Math.min(0.999, (t - 26) / 18)) * (STOPS.length - 1);
+    const n = Math.floor(p), f = p - n, a = STOPS[n], b = STOPS[n + 1];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  }
+
+  function draw(now) {
+    temp.forEach((t, i) => {
+      const c = color(t), o = i * 4;
+      image.data[o] = c[0]; image.data[o + 1] = c[1]; image.data[o + 2] = c[2]; image.data[o + 3] = 255;
+    });
+    bctx.putImageData(image, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(buffer, 0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const k = type[idx(x, y)], px = x * CW, py = y * CH;
+      if (k === BUILDING || k === ROOF) {
+        ctx.fillStyle = k === ROOF ? 'rgba(255,255,255,.5)' : 'rgba(0,0,0,.14)';
+        ctx.fillRect(px + 1, py + 1, CW - 2, CH - 2);
+      } else if (k === TREE) {
+        const sway = calm ? 0 : Math.sin(now / 500 + x + y) * 1.2;
+        ctx.fillStyle = '#06331d';
+        ctx.beginPath();
+        ctx.arc(px + CW / 2 + sway, py + CH / 2, CW * 0.42, 0, 6.283);
+        ctx.fill();
+        ctx.fillStyle = '#5dffa8';
+        ctx.beginPath();
+        ctx.arc(px + CW / 2 + sway, py + CH / 2, CW * 0.2, 0, 6.283);
+        ctx.fill();
+      }
+    }
+
+    if (!calm) {
+      ctx.fillStyle = 'rgba(255,255,255,.28)';
+      for (let n = 0; n < 40; n++) {
+        const x = Math.floor((n * 37 + 11) % COLS), y0 = (n * 23) % ROWS;
+        if (temp[idx(x, y0)] < DANGER) continue;
+        const rise = (now / 40 + n * 19) % 40;
+        ctx.fillRect(x * CW + Math.sin(rise / 5) * 3, y0 * CH - rise, 1.5, 7);
+      }
+    }
+
+    ctx.fillStyle = '#b8fff0';
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const s = sparks[i];
+      s.x += s.vx; s.y += s.vy; s.life -= 0.04;
+      if (s.life <= 0) { sparks.splice(i, 1); continue; }
+      ctx.globalAlpha = s.life;
+      ctx.fillRect(s.x, s.y, 3, 3);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function autoStep() {
+    let best = -1, score = -Infinity;
+    temp.forEach((t, i) => {
+      if (type[i] !== ROAD && type[i] !== BUILDING) return;
+      const value = (t - 30) * (1 + people[i] / 60) + Math.random() * 0.2;
+      if (value > score) { score = value; best = i; }
+    });
+    if (best < 0) return false;
+    return place(best % COLS, Math.floor(best / COLS), type[best] === ROAD ? TREE : ROOF);
+  }
+
+  let tick = 0;
+  function frame(now) {
+    if (autoRunning) {
+      for (let n = 0; n < 2; n++) {
+        if (budget <= 0 || !autoStep()) { autoRunning = false; break; }
+      }
+    }
+    for (let n = 0; n < 3; n++) step();
+    draw(now);
+    if (++tick % 6 === 0) stats();
+    requestAnimationFrame(frame);
+  }
+
+  function pointerCell(e) {
+    const box = canvas.getBoundingClientRect();
+    return [
+      Math.floor((e.clientX - box.left) / box.width * COLS),
+      Math.floor((e.clientY - box.top) / box.height * ROWS),
+    ];
+  }
+  function paint(e) {
+    const [x, y] = pointerCell(e);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) place(x + dx, y + dy, tool);
+  }
+  let down = false;
+  canvas.addEventListener('pointerdown', (e) => {
+    down = true;
+    autoRunning = false;
+    canvas.setPointerCapture(e.pointerId);
+    $('hint').style.display = 'none';
+    paint(e);
+  });
+  canvas.addEventListener('pointermove', (e) => { if (down) paint(e); });
+  canvas.addEventListener('pointerup', () => { down = false; });
+  canvas.addEventListener('pointercancel', () => { down = false; });
+
+  function pick(kind) {
+    tool = kind;
+    $('tree').setAttribute('aria-pressed', kind === TREE);
+    $('roof').setAttribute('aria-pressed', kind === ROOF);
+  }
+  $('tree').onclick = () => pick(TREE);
+  $('roof').onclick = () => pick(ROOF);
+  $('auto').onclick = () => { $('hint').style.display = 'none'; autoRunning = true; };
+  $('reset').onclick = buildCity;
+
+  buildCity();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

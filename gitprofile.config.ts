@@ -112,18 +112,18 @@ const CONFIG = {
           link: 'https://iqhomes.vercel.app',
         },
         {
-          title: 'Sprout Buddy (Concept)',
+          title: 'Lifeline (Concept)',
           description:
-            'A cute concept demo where your houseplants tell you when they are thirsty and perk up when you water them. Built with plain HTML, CSS and JavaScript.',
-          imageUrl: '/images/projects/sprout-buddy.svg',
-          link: '/concepts/sprout-buddy.html',
+            'A CPR practice coach that reads your compression rhythm from taps and tells you to go faster, slower or hold steady, with a particle heart that beats with every push. Built with HTML Canvas and the Web Audio API.',
+          imageUrl: '/images/projects/lifeline.svg',
+          link: '/concepts/lifeline.html',
         },
         {
-          title: 'Purr Planner (Concept)',
+          title: 'HeatShift (Concept)',
           description:
-            'A cute concept demo of a daily cat-care checklist. Every finished chore makes Mochi the cat a little happier. Built with plain HTML, CSS and JavaScript.',
-          imageUrl: '/images/projects/purr-planner.svg',
-          link: '/concepts/purr-planner.html',
+            'An interactive urban heat simulator: plant street trees and cool roofs on a live thermal map, or let it find a plan, and watch the temperature and residents at risk change. Built with HTML Canvas and a real-time diffusion model.',
+          imageUrl: '/images/projects/heatshift.svg',
+          link: '/concepts/heatshift.html',
         },
       ],
     },
