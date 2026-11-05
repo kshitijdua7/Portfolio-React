@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Echosight</title>
+<style>
+  :root{--bg:#04050a;--ink:#f2f6ff;--dim:#98a3b8;--a:#5ef2ff;--b:#b56bff}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  canvas{position:fixed;inset:0;width:100%;height:100%}
+  video{display:none}
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:16px 16px max(16px,env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;flex-wrap:wrap;background:linear-gradient(transparent,#04050af0)}
+  .top{position:fixed;top:0;left:0;right:0;padding:16px;display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--dim)}
+  .top b{color:var(--ink);letter-spacing:.2em;font-size:13px}
+  #status{text-align:right;max-width:32ch;line-height:1.4}
+  button{font:inherit;font-weight:700;color:var(--ink);background:#ffffff14;border:1px solid #ffffff2e;border-radius:12px;padding:12px 16px;min-height:44px;cursor:pointer}
+  button:hover{background:#ffffff26}
+  button:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+  button[aria-pressed=true]{background:var(--ink);color:#0a0d14}
+  #intro{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:#04050ad9}
+  h1{margin:0;font-size:clamp(44px,11vw,100px);letter-spacing:-.04em;line-height:1;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+  #intro p{max-width:52ch;line-height:1.55;color:#d3daea;margin:16px 0}
+  #intro .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  #camera{background:var(--a);border-color:var(--a);color:#03262b;font-size:18px;padding:16px 24px}
+  #intro small{color:var(--dim);margin-top:18px;max-width:56ch;line-height:1.5}
+</style>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<video id="v" playsinline muted></video>
+<div class="top"><b>ECHOSIGHT</b><div id="status" aria-live="polite"></div></div>
+<div class="bar">
+  <button id="sound" aria-pressed="true">Sound</button>
+  <button id="speed">Scan: 1.5s</button>
+  <button id="source">Use demo scene</button>
+</div>
+<div id="intro">
+  <h1>Echosight</h1>
+  <p>Hundreds of millions of people live with serious vision loss. Echosight turns what a camera sees into sound: it sweeps left to right, <strong>high objects sound high, low objects sound low, and louder means a stronger edge</strong>. Your brain does the rest.</p>
+  <div class="row">
+    <button id="camera">Start camera</button>
+    <button id="demoStart">Try the demo scene</button>
+  </div>
+  <small>Headphones recommended. Video stays on your device and is never uploaded. This is an experiment, not a mobility aid, so it should not replace a cane, a guide dog or training.</small>
+</div>
+<script>
+(() => {
+  const COLS = 64, ROWS = 36, LOW = 180, HIGH = 3200;
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('c'), ctx = canvas.getContext('2d'), video = $('v');
+  const grab = document.createElement('canvas');
+  grab.width = COLS; grab.height = ROWS;
+  const gctx = grab.getContext('2d', { willReadFrequently: true });
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const edges = new Float32Array(COLS * ROWS);
+  const glow = new Float32Array(COLS * ROWS);
+  const SPEEDS = [1.5, 1, 2.5];
+  let W = 0, H = 0, useCamera = false, soundOn = true, speedIndex = 0;
+  let audio = null, voices = [], panner = null, master = null, scan = 0, last = 0, lastColumn = -1;
+
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  function startAudio() {
+    if (audio) { audio.resume(); return; }
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    master = audio.createGain();
+    master.gain.value = soundOn ? 0.5 : 0;
+    panner = audio.createStereoPanner();
+    panner.connect(master).connect(audio.destination);
+    for (let row = 0; row < ROWS; row++) {
+      const osc = audio.createOscillator(), gain = audio.createGain();
+      osc.frequency.value = HIGH * Math.pow(LOW / HIGH, row / (ROWS - 1));
+      gain.gain.value = 0;
+      osc.connect(gain).connect(panner);
+      osc.start();
+      voices.push(gain);
+    }
+  }
+
+  function demoScene(now) {
+    const t = now / 1000;
+    gctx.fillStyle = '#000';
+    gctx.fillRect(0, 0, COLS, ROWS);
+    gctx.fillStyle = '#fff';
+    gctx.fillRect(6 + Math.sin(t * 0.5) * 3, 16, 12, 20);
+    gctx.fillStyle = '#999';
+    gctx.fillRect(0, 31, COLS, 5);
+    gctx.fillStyle = '#ddd';
+    gctx.beginPath();
+    gctx.arc(40 + Math.sin(t * 0.8) * 14, 12 + Math.cos(t * 1.1) * 4, 7, 0, 6.283);
+    gctx.fill();
+    gctx.beginPath();
+    gctx.moveTo(52, 31); gctx.lineTo(58, 17); gctx.lineTo(63, 31);
+    gctx.fill();
+  }
+
+  function readFrame(now) {
+    if (useCamera && video.readyState >= 2) {
+      gctx.save();
+      gctx.translate(COLS, 0);
+      gctx.scale(-1, 1);
+      gctx.drawImage(video, 0, 0, COLS, ROWS);
+      gctx.restore();
+    } else if (!useCamera) {
+      demoScene(now);
+    }
+    const px = gctx.getImageData(0, 0, COLS, ROWS).data;
+    const lum = (x, y) => {
+      const i = (y * COLS + x) * 4;
+      return (px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11) / 255;
+    };
+    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+      const gx = lum(x + 1, y) - lum(x - 1, y), gy = lum(x, y + 1) - lum(x, y - 1);
+      edges[y * COLS + x] = Math.min(1, Math.hypot(gx, gy) * 2.4);
+    }
+  }
+
+  function playColumn(col) {
+    if (!audio) return;
+    const at = audio.currentTime;
+    panner.pan.setTargetAtTime(col / (COLS - 1) * 2 - 1, at, 0.01);
+    let active = 0;
+    for (let row = 0; row < ROWS; row++) if (edges[row * COLS + col] > 0.18) active++;
+    const share = 0.5 / Math.max(3, active);
+    for (let row = 0; row < ROWS; row++) {
+      const e = edges[row * COLS + col];
+      voices[row].gain.setTargetAtTime(e > 0.18 ? e * share : 0, at, 0.012);
+    }
+  }
+
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000 || 0);
+    last = now;
+    readFrame(now);
+    scan = (scan + dt / SPEEDS[speedIndex]) % 1;
+    const col = Math.floor(scan * COLS);
+    if (col !== lastColumn) { lastColumn = col; playColumn(col); }
+
+    ctx.fillStyle = 'rgba(4,5,10,.32)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    const cw = W / COLS, ch = H / ROWS;
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const i = y * COLS + x;
+      let dist = Math.abs(x - col);
+      dist = Math.min(dist, COLS - dist);
+      const hit = dist < 2 ? edges[i] : 0;
+      glow[i] = Math.max(glow[i] * (calm ? 0.8 : 0.93), hit);
+      const e = edges[i], g = glow[i];
+      if (e < 0.08 && g < 0.03) continue;
+      const hue = 280 - y / (ROWS - 1) * 95;
+      ctx.fillStyle = `hsla(${hue},100%,${55 + g * 30}%,${0.14 + e * 0.3 + g * 0.6})`;
+      const r = Math.min(cw, ch) * (0.1 + e * 0.2 + g * 0.45);
+      ctx.beginPath();
+      ctx.arc((x + 0.5) * cw, (y + 0.5) * ch, r, 0, 6.283);
+      ctx.fill();
+    }
+    const sx = scan * W;
+    const beam = ctx.createLinearGradient(sx - 90, 0, sx + 6, 0);
+    beam.addColorStop(0, 'rgba(94,242,255,0)');
+    beam.addColorStop(1, 'rgba(94,242,255,.3)');
+    ctx.fillStyle = beam;
+    ctx.fillRect(sx - 90, 0, 96, H);
+    ctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(frame);
+  }
+
+  function setSource(camera) {
+    useCamera = camera;
+    $('source').textContent = camera ? 'Use demo scene' : 'Use camera';
+    $('status').textContent = camera ? 'Camera on. Video stays on this device' : 'Demo scene: a door, a moving ball and a cone';
+  }
+
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      video.srcObject = stream;
+      await video.play();
+      setSource(true);
+    } catch {
+      setSource(false);
+      $('status').textContent = 'Camera unavailable, so showing the demo scene';
+    }
+  }
+
+  $('camera').onclick = () => { startAudio(); $('intro').style.display = 'none'; startCamera(); };
+  $('demoStart').onclick = () => { startAudio(); $('intro').style.display = 'none'; setSource(false); };
+  $('source').onclick = () => {
+    startAudio();
+    if (useCamera) setSource(false);
+    else if (video.srcObject) setSource(true);
+    else startCamera();
+  };
+  $('sound').onclick = () => {
+    startAudio();
+    soundOn = !soundOn;
+    master.gain.value = soundOn ? 0.5 : 0;
+    $('sound').setAttribute('aria-pressed', soundOn);
+  };
+  $('speed').onclick = () => {
+    speedIndex = (speedIndex + 1) % SPEEDS.length;
+    $('speed').textContent = `Scan: ${SPEEDS[speedIndex]}s`;
+  };
+
+  setSource(false);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -112,18 +112,18 @@ const CONFIG = {
           link: 'https://iqhomes.vercel.app',
         },
         {
-          title: 'Lifeline (Concept)',
+          title: 'Lifeline',
           description:
             'A CPR practice coach that reads your compression rhythm from taps and tells you to go faster, slower or hold steady, with a particle heart that beats with every push. Built with HTML Canvas and the Web Audio API.',
           imageUrl: '/images/projects/lifeline.svg',
           link: '/concepts/lifeline.html',
         },
         {
-          title: 'HeatShift (Concept)',
+          title: 'Echosight',
           description:
-            'An interactive urban heat simulator: plant street trees and cool roofs on a live thermal map, or let it find a plan, and watch the temperature and residents at risk change. Built with HTML Canvas and a real-time diffusion model.',
-          imageUrl: '/images/projects/heatshift.svg',
-          link: '/concepts/heatshift.html',
+            'Turns a live camera feed into sound so people with vision loss can hear the shape of what is in front of them: height becomes pitch and edges become volume. Runs entirely on the device. Built with HTML Canvas, the camera API and the Web Audio API.',
+          imageUrl: '/images/projects/echosight.svg',
+          link: '/concepts/echosight.html',
         },
       ],
     },
