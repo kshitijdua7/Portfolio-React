@@ -98,6 +98,13 @@ const CONFIG = {
           link: 'https://github.com/kshitijdua7/PhrasePerfect',
         },
         {
+          title: 'The Shading Zone',
+          description:
+            'Website for a custom window covering company that designs, manufactures and installs blinds, shades, curtains and drapery for homes and commercial spaces. Built with Next.js, TypeScript and Tailwind CSS.',
+          imageUrl: '/images/projects/shading-zone.svg',
+          link: 'https://github.com/kshitijdua7/The-Shading-Zone',
+        },
+        {
           title: 'Sprout Buddy (Concept)',
           description:
             'A cute concept demo where your houseplants tell you when they are thirsty and perk up when you water them. Built with plain HTML, CSS and JavaScript.',

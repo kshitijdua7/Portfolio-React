@@ -154,7 +154,7 @@ const GithubProjectCard = ({
                     skeleton({ widthCls: 'w-10', heightCls: 'h-5' })
                   ) : (
                     <a
-                      href={`https://github.com/${username}?tab=repositories`}
+                      href={`https://github.com/${username}`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-base-content opacity-50 hover:underline"
