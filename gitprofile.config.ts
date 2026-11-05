@@ -39,7 +39,7 @@ const CONFIG = {
     {
       company: 'Self-employed',
       position: 'Freelance Full-Stack Developer',
-      from: 'Nov 2025',
+      from: 'Nov 2023',
       to: 'Present',
       companyLink: 'https://github.com/kshitijdua7',
     },
