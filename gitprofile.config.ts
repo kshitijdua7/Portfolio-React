@@ -112,9 +112,9 @@ const CONFIG = {
           link: 'https://iqhomes.vercel.app',
         },
         {
-          title: 'Nova Smart Home',
+          title: 'IQ Homes Dashboard',
           description:
-            'A real-time smart home dashboard with Nova, an Alexa-style voice assistant. Say "Hey Nova, dim the living room" and every open screen updates instantly. Includes scenes, timers, a 3D floor plan and live energy pricing. Built with React, TypeScript, Node.js, Socket.io and PostgreSQL.',
+            'A smart home dashboard I built for my IQ Homes business, so clients can control their whole home in one place. Nova, its Alexa-style voice assistant, handles commands like "Hey Nova, dim the living room", and every open screen updates instantly. Includes scenes, timers, a 3D floor plan and live energy pricing. Built with React, TypeScript, Node.js, Socket.io and PostgreSQL.',
           imageUrl: '/images/projects/nova-smart-home.png',
           link: '',
         },
