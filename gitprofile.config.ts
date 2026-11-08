@@ -112,6 +112,13 @@ const CONFIG = {
           link: 'https://iqhomes.vercel.app',
         },
         {
+          title: 'Nova Smart Home',
+          description:
+            'A real-time smart home dashboard with Nova, an Alexa-style voice assistant. Say "Hey Nova, dim the living room" and every open screen updates instantly. Includes scenes, timers, a 3D floor plan and live energy pricing. Built with React, TypeScript, Node.js, Socket.io and PostgreSQL.',
+          imageUrl: '/images/projects/nova-smart-home.png',
+          link: '',
+        },
+        {
           title: 'Lifeline',
           description:
             'A CPR practice coach that reads your compression rhythm from taps and tells you to go faster, slower or hold steady, with a particle heart that beats with every push. Built with HTML Canvas and the Web Audio API.',
