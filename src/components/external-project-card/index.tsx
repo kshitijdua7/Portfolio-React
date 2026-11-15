@@ -90,7 +90,7 @@ const ExternalProjectCard = ({
               )}
               <div>
                 <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-1">
-                  Featured · Real-time collaboration
+                  Featured project
                 </p>
                 <h2
                   id={`project-${item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-title`}

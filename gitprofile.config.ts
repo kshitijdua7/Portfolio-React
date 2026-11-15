@@ -77,6 +77,26 @@ const CONFIG = {
       header: 'Featured Projects',
       projects: [
         {
+          title: 'PantryPal',
+          description:
+            'A pantry-to-recipe planner that helps households cook with what they already have and waste less food. Add ingredients by hand, paste a grocery list or scan a barcode, then discover matching recipes and ingredient swaps. Cook step by step with timers, track meals and waste, and send missing ingredients to a shareable shopping list. Personalise the app with 12 animated themes, install it for offline use, and back up your data.',
+          imageUrl: '/images/projects/pantrypal.svg',
+          link: 'https://pantrypal-self-tau.vercel.app',
+          githubUrl: 'https://github.com/kshitijdua7/PantryPal',
+          technologies: ['React', 'TypeScript', 'Vite', 'Tailwind CSS', 'Zustand', 'Vercel Functions'],
+          highlights: [
+            'Pantry matching, ingredient swaps, custom recipes and step-by-step cooking timers.',
+            'Barcode lookup, bulk entry and automatic shopping reminders for low staples.',
+            'Cooking history, waste insights, nutrition estimates and shopping-list sharing.',
+            '12 animated themes, offline installation, JSON backups and an AI chef integration.',
+          ],
+          metrics: [
+            { value: '12', label: 'Visual themes' },
+            { value: '18', label: 'Curated recipes' },
+            { value: '21', label: 'Unit tests' },
+          ],
+        },
+        {
           title: 'Huddle',
           description:
             'A real-time collaborative workspace built with Elixir and Phoenix LiveView. Open a board, share a link and plan together with live cards, cursors, chat and a shared timer — no sign-up required.',
