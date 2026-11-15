@@ -72,7 +72,7 @@ const ExternalProjectCard = ({
       <article
         id={`project-${item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
         key={item.title}
-        className="card shadow-lg compact bg-base-100"
+        className="card shadow-lg compact bg-base-100 col-span-1 min-w-0"
       >
         <div className="p-8 h-full w-full flex flex-col items-center">
           <a
@@ -109,7 +109,7 @@ const ExternalProjectCard = ({
             </p>
           </a>
           {item.githubUrl && (
-            <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <div className="mt-auto pt-4 flex flex-wrap justify-center gap-3">
               <a
                 href={item.link}
                 target="_blank"

@@ -79,7 +79,7 @@ const CONFIG = {
         {
           title: 'PantryPal',
           description:
-            'A pantry-to-recipe planner that helps you cook with what you have and waste less food. Add ingredients, discover matching recipes and swaps, then send missing items to a shareable shopping list. Includes cooking timers, barcode lookup, offline support and 12 animated themes.',
+            'Plan meals from ingredients you already have and waste less food. Add your pantry, find matching recipes and send missing ingredients to a shopping list. Built with React and TypeScript, with offline support and 12 themes.',
           imageUrl: '/images/projects/pantrypal.svg',
           link: 'https://pantrypal-self-tau.vercel.app',
           githubUrl: 'https://github.com/kshitijdua7/PantryPal',
