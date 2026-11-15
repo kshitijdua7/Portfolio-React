@@ -79,7 +79,7 @@ const CONFIG = {
         {
           title: 'PantryPal',
           description:
-            'A pantry-to-recipe planner that helps households cook with what they already have and waste less food. Add ingredients by hand, paste a grocery list or scan a barcode, then discover matching recipes and ingredient swaps. Cook step by step with timers, track meals and waste, and send missing ingredients to a shareable shopping list. Personalise the app with 12 animated themes, install it for offline use, and back up your data.',
+            'A pantry-to-recipe planner that helps you cook with what you have and waste less food. Add ingredients, discover matching recipes and swaps, then send missing items to a shareable shopping list. Includes cooking timers, barcode lookup, offline support and 12 animated themes.',
           imageUrl: '/images/projects/pantrypal.svg',
           link: 'https://pantrypal-self-tau.vercel.app',
           githubUrl: 'https://github.com/kshitijdua7/PantryPal',

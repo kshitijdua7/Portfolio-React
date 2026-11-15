@@ -23,7 +23,18 @@ export default defineConfig({
           VitePWA({
             registerType: 'autoUpdate',
             workbox: {
-              navigateFallback: 'index.html',
+              navigateFallback: null,
+              runtimeCaching: [
+                {
+                  urlPattern: ({ request }) => request.mode === 'navigate',
+                  handler: 'NetworkFirst',
+                  options: {
+                    cacheName: 'portfolio-pages',
+                    networkTimeoutSeconds: 3,
+                    cacheableResponse: { statuses: [200] },
+                  },
+                },
+              ],
               navigateFallbackDenylist: [
                 new RegExp('^/Certificates/'),
                 new RegExp('\\.pdf$'),
