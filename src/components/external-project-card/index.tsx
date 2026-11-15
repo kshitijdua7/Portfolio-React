@@ -96,7 +96,14 @@ const ExternalProjectCard = ({
                   id={`project-${item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-title`}
                   className="text-2xl font-bold text-base-content"
                 >
-                  {item.title}
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+                  >
+                    {item.title}
+                  </a>
                 </h2>
               </div>
             </div>

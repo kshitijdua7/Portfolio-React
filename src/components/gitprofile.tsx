@@ -1,35 +1,35 @@
-import { useCallback, useEffect, useState } from 'react';
-import axios, { AxiosError } from 'axios';
-import { formatDistance } from 'date-fns';
+import { useCallback, useEffect, useState } from "react";
+import axios, { AxiosError } from "axios";
+import { formatDistance } from "date-fns";
 import {
   CustomError,
   GENERIC_ERROR,
   INVALID_CONFIG_ERROR,
   INVALID_GITHUB_USERNAME_ERROR,
   setTooManyRequestError,
-} from '../constants/errors';
-import { HelmetProvider } from 'react-helmet-async';
-import '../assets/index.css';
-import { getInitialTheme, getSanitizedConfig, setupHotjar } from '../utils';
-import { SanitizedConfig } from '../interfaces/sanitized-config';
-import ErrorPage from './error-page';
-import HeadTagEditor from './head-tag-editor';
-import { DEFAULT_THEMES } from '../constants/default-themes';
-import ThemeChanger from './theme-changer';
-import { BG_COLOR } from '../constants';
-import AvatarCard from './avatar-card';
-import { Profile } from '../interfaces/profile';
-import DetailsCard from './details-card';
-import SkillCard from './skill-card';
-import ExperienceCard from './experience-card';
-import EducationCard from './education-card';
-import CertificationCard from './certification-card';
-import { GithubProject } from '../interfaces/github-project';
-import GithubProjectCard from './github-project-card';
-import ExternalProjectCard from './external-project-card';
-import BlogCard from './blog-card';
-import Footer from './footer';
-import PublicationCard from './publication-card';
+} from "../constants/errors";
+import { HelmetProvider } from "react-helmet-async";
+import "../assets/index.css";
+import { getInitialTheme, getSanitizedConfig, setupHotjar } from "../utils";
+import { SanitizedConfig } from "../interfaces/sanitized-config";
+import ErrorPage from "./error-page";
+import HeadTagEditor from "./head-tag-editor";
+import { DEFAULT_THEMES } from "../constants/default-themes";
+import ThemeChanger from "./theme-changer";
+import { BG_COLOR } from "../constants";
+import AvatarCard from "./avatar-card";
+import { Profile } from "../interfaces/profile";
+import DetailsCard from "./details-card";
+import SkillCard from "./skill-card";
+import ExperienceCard from "./experience-card";
+import EducationCard from "./education-card";
+import CertificationCard from "./certification-card";
+import { GithubProject } from "../interfaces/github-project";
+import GithubProjectCard from "./github-project-card";
+import ExternalProjectCard from "./external-project-card";
+import BlogCard from "./blog-card";
+import Footer from "./footer";
+import PublicationCard from "./publication-card";
 
 /**
  * Renders the GitProfile component.
@@ -47,12 +47,13 @@ const GitProfile = ({ config }: { config: Config }) => {
   const [theme, setTheme] = useState<string>(DEFAULT_THEMES[0]);
   const [error, setError] = useState<CustomError | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [githubError, setGithubError] = useState<CustomError | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [githubProjects, setGithubProjects] = useState<GithubProject[]>([]);
 
   const getGithubProjects = useCallback(
     async (publicRepoCount: number): Promise<GithubProject[]> => {
-      if (sanitizedConfig.projects.github.mode === 'automatic') {
+      if (sanitizedConfig.projects.github.mode === "automatic") {
         if (publicRepoCount === 0) {
           return [];
         }
@@ -60,13 +61,13 @@ const GitProfile = ({ config }: { config: Config }) => {
         const excludeRepo =
           sanitizedConfig.projects.github.automatic.exclude.projects
             .map((project) => `+-repo:${project}`)
-            .join('');
+            .join("");
 
         const query = `user:${sanitizedConfig.github.username}+fork:${!sanitizedConfig.projects.github.automatic.exclude.forks}${excludeRepo}`;
         const url = `https://api.github.com/search/repositories?q=${query}&sort=${sanitizedConfig.projects.github.automatic.sortBy}&per_page=${sanitizedConfig.projects.github.automatic.limit}&type=Repositories`;
 
         const repoResponse = await axios.get(url, {
-          headers: { 'Content-Type': 'application/vnd.github.v3+json' },
+          headers: { "Content-Type": "application/vnd.github.v3+json" },
         });
         const repoData = repoResponse.data;
 
@@ -77,12 +78,12 @@ const GitProfile = ({ config }: { config: Config }) => {
         }
         const repos = sanitizedConfig.projects.github.manual.projects
           .map((project) => `+repo:${project}`)
-          .join('');
+          .join("");
 
         const url = `https://api.github.com/search/repositories?q=${repos}+fork:true&type=Repositories`;
 
         const repoResponse = await axios.get(url, {
-          headers: { 'Content-Type': 'application/vnd.github.v3+json' },
+          headers: { "Content-Type": "application/vnd.github.v3+json" },
         });
         const repoData = repoResponse.data;
 
@@ -103,6 +104,7 @@ const GitProfile = ({ config }: { config: Config }) => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setGithubError(null);
 
       const response = await axios.get(
         `https://api.github.com/users/${sanitizedConfig.github.username}`,
@@ -111,10 +113,10 @@ const GitProfile = ({ config }: { config: Config }) => {
 
       setProfile({
         avatar: data.avatar_url,
-        name: data.name || ' ',
-        bio: data.bio || '',
-        location: data.location || '',
-        company: data.company || '',
+        name: data.name || " ",
+        bio: data.bio || "",
+        location: data.location || "",
+        company: data.company || "",
       });
 
       if (!sanitizedConfig.projects.github.display) {
@@ -145,40 +147,40 @@ const GitProfile = ({ config }: { config: Config }) => {
   }, [sanitizedConfig, loadData]);
 
   useEffect(() => {
-    theme && document.documentElement.setAttribute('data-theme', theme);
+    theme && document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
   const handleError = (error: AxiosError | Error): void => {
-    console.error('Error:', error);
+    console.error("Error:", error);
 
     if (error instanceof AxiosError) {
       try {
         const reset = formatDistance(
-          new Date(error.response?.headers?.['x-ratelimit-reset'] * 1000),
+          new Date(error.response?.headers?.["x-ratelimit-reset"] * 1000),
           new Date(),
           { addSuffix: true },
         );
 
-        if (typeof error.response?.status === 'number') {
+        if (typeof error.response?.status === "number") {
           switch (error.response.status) {
             case 403:
-              setError(setTooManyRequestError(reset));
+              setGithubError(setTooManyRequestError(reset));
               break;
             case 404:
-              setError(INVALID_GITHUB_USERNAME_ERROR);
+              setGithubError(INVALID_GITHUB_USERNAME_ERROR);
               break;
             default:
-              setError(GENERIC_ERROR);
+              setGithubError(GENERIC_ERROR);
               break;
           }
         } else {
-          setError(GENERIC_ERROR);
+          setGithubError(GENERIC_ERROR);
         }
       } catch (innerError) {
-        setError(GENERIC_ERROR);
+        setGithubError(GENERIC_ERROR);
       }
     } else {
-      setError(GENERIC_ERROR);
+      setGithubError(GENERIC_ERROR);
     }
   };
 
@@ -248,6 +250,27 @@ const GitProfile = ({ config }: { config: Config }) => {
                 </div>
                 <div className="lg:col-span-2 col-span-1">
                   <div className="grid grid-cols-1 gap-6">
+                    {sanitizedConfig.projects.external.projects.length !==
+                      0 && (
+                      <ExternalProjectCard
+                        loading={false}
+                        header={sanitizedConfig.projects.external.header}
+                        externalProjects={
+                          sanitizedConfig.projects.external.projects
+                        }
+                        googleAnalyticId={sanitizedConfig.googleAnalytics.id}
+                      />
+                    )}
+                    {githubError && (
+                      <p
+                        role="status"
+                        className="rounded-xl bg-base-100 p-4 text-sm text-base-content"
+                      >
+                        GitHub repositories are temporarily unavailable. You can
+                        still explore Featured Projects and open their live
+                        demos.
+                      </p>
+                    )}
                     {sanitizedConfig.projects.github.display && (
                       <GithubProjectCard
                         header={sanitizedConfig.projects.github.header}
@@ -261,17 +284,6 @@ const GitProfile = ({ config }: { config: Config }) => {
                       <PublicationCard
                         loading={loading}
                         publications={sanitizedConfig.publications}
-                      />
-                    )}
-                    {sanitizedConfig.projects.external.projects.length !==
-                      0 && (
-                      <ExternalProjectCard
-                        loading={loading}
-                        header={sanitizedConfig.projects.external.header}
-                        externalProjects={
-                          sanitizedConfig.projects.external.projects
-                        }
-                        googleAnalyticId={sanitizedConfig.googleAnalytics.id}
                       />
                     )}
                     {sanitizedConfig.blog.display && (
