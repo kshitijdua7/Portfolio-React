@@ -77,6 +77,26 @@ const CONFIG = {
       header: 'Featured Projects',
       projects: [
         {
+          title: 'Huddle',
+          description:
+            'A real-time collaborative workspace built with Elixir and Phoenix LiveView. Open a board, share a link and plan together with live cards, cursors, chat and a shared timer — no sign-up required.',
+          imageUrl: '/images/projects/huddle.svg',
+          link: 'https://huddle-xi-rose.vercel.app',
+          githubUrl: 'https://github.com/kshitijdua7/Huddle',
+          technologies: ['Elixir', 'Phoenix LiveView', 'PostgreSQL', 'PubSub', 'Tailwind CSS', 'Docker'],
+          highlights: [
+            'Live card updates, drag-and-drop, presence, cursors and chat over WebSockets.',
+            'QR invites, separate edit and view-only links, and server-enforced read-only access.',
+            'Hidden vote counts, emoji reactions, presenter follow mode and shared countdowns.',
+            'Editable columns and cards, coloured labels, search, and Markdown / CSV export.',
+          ],
+          metrics: [
+            { value: '100', label: 'Automated tests' },
+            { value: '2', label: 'Access modes' },
+            { value: '2', label: 'Export formats' },
+          ],
+        },
+        {
           title: 'All Time Solutions',
           description:
             'Website for a property turnover and renovation company serving the GTA, covering painting, drywall repair, deep cleaning, plumbing, electrical and more. Built with Next.js, React, TypeScript and Tailwind CSS.',

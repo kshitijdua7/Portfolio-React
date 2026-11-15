@@ -57,12 +57,28 @@ declare const CONFIG: {
         };
         external: {
             header: string;
-            projects: {
+            projects: ({
                 title: string;
                 description: string;
                 imageUrl: string;
                 link: string;
-            }[];
+                githubUrl: string;
+                technologies: string[];
+                highlights: string[];
+                metrics: {
+                    value: string;
+                    label: string;
+                }[];
+            } | {
+                title: string;
+                description: string;
+                imageUrl: string;
+                link: string;
+                githubUrl?: undefined;
+                technologies?: undefined;
+                highlights?: undefined;
+                metrics?: undefined;
+            })[];
         };
     };
     themeConfig: {

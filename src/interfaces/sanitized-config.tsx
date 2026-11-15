@@ -24,6 +24,10 @@ export interface SanitizedExternalProject {
   description?: string;
   imageUrl?: string;
   link: string;
+  githubUrl?: string;
+  technologies?: string[];
+  highlights?: string[];
+  metrics?: { value: string; label: string }[];
 }
 
 export interface SanitizedExternalProjects {
@@ -122,9 +126,9 @@ export interface SanitizedCustomTheme {
   secondary: string;
   accent: string;
   neutral: string;
-  'base-100': string;
-  '--rounded-box': string;
-  '--rounded-btn': string;
+  "base-100": string;
+  "--rounded-box": string;
+  "--rounded-btn": string;
 }
 
 export interface SanitizedThemeConfig {
